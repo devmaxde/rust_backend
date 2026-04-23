@@ -111,8 +111,11 @@ jobs:
       - name: Check Cargo Installation
         run: cargo --version
 
+      - name: Install cross
+        run: cargo install cross
+
       - name: Build
-        run: cargo build --release --target ${{ matrix.target }}
+        run: cross build --release --target ${{ matrix.target }}
 
       - name: Rename binary
         run: |
