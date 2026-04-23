@@ -65,6 +65,7 @@ jobs:
         component: [ backend ]
         target:
           - x86_64-unknown-linux-musl
+          - aarch64-unknown-linux-musl
         linker: [ dynamic ]
 
     steps:
@@ -150,9 +151,13 @@ jobs:
           mkdir -p ctx/linux/amd64 ctx/linux/arm64 ctx/linux/arm/v7
           tree
 
-          mv ${{ matrix.component }}_x86_64-unknown-linux-musl/${{ matrix.component }}_x86_64-unknown-linux-musl ctx/linux/amd64/backend-${{ matrix.component }}
-
-          chmod +x ctx/linux/amd64/backend-${{ matrix.component }}
+          if [ "${{ matrix.target }}" = "x86_64-unknown-linux-musl" ]; then
+            mv ${{ matrix.component }}_x86_64-unknown-linux-musl/${{ matrix.component }}_x86_64-unknown-linux-musl ctx/linux/amd64/backend-${{ matrix.component }}
+            chmod +x ctx/linux/amd64/backend-${{ matrix.component }}
+          elif [ "${{ matrix.target }}" = "aarch64-unknown-linux-musl" ]; then
+            mv ${{ matrix.component }}_aarch64-unknown-linux-musl/${{ matrix.component }}_aarch64-unknown-linux-musl ctx/linux/arm64/backend-${{ matrix.component }}
+            chmod +x ctx/linux/arm64/backend-${{ matrix.component }}
+          fi
 
           tree ctx
 
@@ -195,7 +200,7 @@ jobs:
         with:
           file: Dockerfile.actions
           context: ctx
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           build-args: COMPONENT=${{ matrix.component }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
