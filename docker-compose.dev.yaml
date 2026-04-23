@@ -1,0 +1,33 @@
+services:
+  db:
+    hostname: db 
+    image: postgres:17.6
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - local_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    profiles:
+      - backend
+    env_file:
+      - .env
+    depends_on:
+      - db 
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    network_mode: host
+
+
+networks:
+  db_net:
+    driver: bridge
+volumes:
+  local_data:
