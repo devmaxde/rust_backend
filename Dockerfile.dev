@@ -1,0 +1,44 @@
+
+FROM rust:1.91-bullseye AS builder
+
+WORKDIR /app
+
+# Copy Cargo files first for better caching
+COPY ./Cargo.lock ./Cargo.toml ./
+COPY ./db ./db
+COPY ./proc_macros ./proc_macros
+COPY ./src ./src
+
+
+RUN cargo build --bin backend
+
+FROM debian:bullseye-slim AS runtime
+
+ENV USER=backend
+ENV UID=42069
+
+RUN adduser \
+    --disabled-password \
+    --gecos "" \
+    --home "/nonexistent" \
+    --shell "/sbin/nologin" \
+    --no-create-home \
+    --uid "${UID}" \
+    "${USER}"
+
+# Install ca-certificates for HTTPS support
+RUN apt-get update
+RUN apt-get install -y ca-certificates
+RUN rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+
+COPY --from=builder /app/target/debug/backend /app/app
+
+RUN chown -R "${USER}:${USER}" /app
+
+# Use the mixen user
+USER backend:backend
+# Set entrypoint to run backend
+ENTRYPOINT ["/app/app"]

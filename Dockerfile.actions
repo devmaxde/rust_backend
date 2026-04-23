@@ -1,0 +1,30 @@
+FROM debian:bullseye-slim AS builder
+ENV USER=backend
+ENV UID=42069
+
+RUN adduser \
+    --disabled-password \
+    --gecos "" \
+    --home "/nonexistent" \
+    --shell "/sbin/nologin" \
+    --no-create-home \
+    --uid "${UID}" \
+    "${USER}"
+
+FROM ubuntu:latest
+ARG TARGETPLATFORM
+ARG COMPONENT
+
+COPY --from=builder /etc/passwd /etc/passwd
+COPY --from=builder /etc/group /etc/group
+
+RUN apt-get update
+RUN apt-get install ca-certificates curl gnupg lsb-release -y
+
+WORKDIR /app
+
+COPY ./${TARGETPLATFORM}/backend-${COMPONENT} ./backend
+
+USER backend:backend
+
+ENTRYPOINT ["/app/backend"]
